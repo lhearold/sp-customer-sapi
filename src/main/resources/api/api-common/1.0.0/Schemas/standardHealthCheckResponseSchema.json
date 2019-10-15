@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Healthcheck Response Schema",
+  "description": "[Version 1.0.0] JSON Healthcheck response",
+    "definitions": {
+    "HealthCheckSystemRecord": {
+      "message": { "type": "string" },
+      "name": { "type": "string" } ,
+      "status": { "type": "string" }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "application":
+    {
+      "type": "string", 
+      "description": "The healh-checked application build version" 
+    },
+    "buildversion":
+    {
+      "type": "string",
+      "description": "The healh-checked application build version"
+    },
+    "buildTimestamp":
+    {
+      "type": "string",
+      "description": "The build timestamp of the health-checked application"
+    },
+    "host":
+    {
+      "type": "string",
+      "description": "The IP address of the host on which the health-checked application was deployed"
+    },
+    "status":
+    {
+      "type": "string",
+      "description": "The status of the health-checked application"
+    },
+    "tier":
+    {
+      "type": "string",
+      "description": "The environment tier in which the health-checked system resides"
+    },
+    "systems":
+    {
+      "type": "array",
+      "items": { "$ref": "#/definitions/HealthCheckSystemRecord" },
+      "description": "An array of chained system records, one for each dependency"
+    }
+  }
+}
+ 

@@ -1,0 +1,21 @@
+#%RAML 1.0 Library
+#=======================================================================
+# Common API Elements
+# standard-traits.raml
+# Date   : September 09, 2019
+# Author : NITISH
+# Rev    : 1
+#=======================================================================
+usage: Standard Traits for Use with IREA API's
+
+traits:
+
+  content-type-required: !include Traits/standard-content-type-required-trait.raml
+
+  accept-required: !include Traits/standard-accept-required-trait.raml
+
+  client-authorization-required: !include Traits/standard-client-authorization-required-trait.raml
+
+  standard-error-responses: !include Traits/standard-error-responses-trait.raml
+
+  client-queryparams-required: !include Traits/standard-queryparams-trait.raml

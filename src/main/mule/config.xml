@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:samba="http://www.mulesoft.org/schema/mule/samba"
+	xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:cluster="http://www.mulesoft.org/schema/mule/ee/cluster" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd 
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+
+
+    <sftp:config name="SFTP_Config" doc:name="SFTP Config" doc:id="2e2ec57c-be7b-420b-b104-541f6cee956d" >
+        <sftp:connection host="${secure::sftp.host}" username="${secure::sftp.username}" password="${secure::sftp.password}" />
+    </sftp:config>
+
+	<secure-properties:config name="Deployment_Specific_Properties"
+		doc:name="Secure Properties Config" file="properties/system-api-template-${mule.env}.yaml"
+		key="${mule.key}"
+		doc:description="Deployment specific properties file which supports encryption of sensitive properties, like passwords, user ids, etc. This deployment environment sensitive...meaning that each deployment environment (DEV, TEST, PROD for instance) has it's own property file.
+
+These can be either .property files or .yaml files. The recommended approach is to use a YAML configuration files, because it allows the addition of type validations and autocompletion.
+
+Both encrypted and non-encrypted values can be used anywhere in the Mule app. Encrypted values should be defined between the sequence ![value].
+
+Note that you have to use the secure:: prefix to access all values inside a secure properties file, even if the values are non-encrypted.
+
+You can define more than one secure configuration properties file to read properties from. Simply define a &lt;secure-properties:config /&gt; tag for each file you want to load. Each secure configuration properties file is independent from the others." />
+
+	<apikit:config name="api-config" raml="api.raml"
+		outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<api-gateway:autodiscovery apiId="${api.id}" doc:name="API Autodiscovery" doc:id="cbad9097-7bec-418b-b698-c750bedf98b2" flowRef="api-main" />
+	<configuration-properties doc:name="Configuration properties" doc:id="551d5169-06ac-4c86-9721-ab622d4eaa95" file="properties/application.yaml" />
+	<http:listener-config name="api-httpsListenerConfig"
+		doc:description="This is not used if a shared domain is configured in the listener..in that case remove this config to prevent this port from showing in the server's port scan." doc:name="HTTP Listener config">
+		<http:listener-connection host="0.0.0.0"
+			port="${secure::https.port}" protocol="HTTPS">
+			<tls:context >
+				<tls:key-store type="jks" path="${secure::keystore.path}" keyPassword="${secure::keystore.keyPassword}" password="${secure::keystore.password}" />
+			</tls:context>
+		</http:listener-connection>
+	</http:listener-config>
+	<json-logger:config name="JSON_Logger_Config" doc:name="JSON Logger Config" doc:id="04cc5ff3-a291-4e99-a4a0-07d30f6a0cc9" />
+	<global-property doc:name="Global Property" doc:id="5bab890d-56ce-4773-9351-aa29c8181245" name="mule.env" value="local" />
+	<global-property doc:name="Global Property" doc:id="01c8e6dc-7393-49ec-bff1-48ccb590cb36" name="mule.key" value="Mulesoft12345678" />
+
+</mule>

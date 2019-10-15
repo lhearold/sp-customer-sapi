@@ -1,0 +1,18 @@
+#%RAML 1.0
+title: irea-customer-sync-papi
+version: v1
+
+uses:  
+  security: api-common/1.0.0/standard-security.raml
+  trait: api-common/1.0.0/standard-traits.raml
+  types: api-common/1.0.0/standard-types.raml
+
+
+/customers:
+  post:
+    description: Writes data into file system.
+    is: [trait.client-authorization-required, trait.standard-error-responses]
+    securedBy: [security.basic]
+    responses:
+      200:
+         description: "OK. The server has accepted the request."

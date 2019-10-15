@@ -1,0 +1,23 @@
+
+{
+    "response": {
+        "application": "Your Application Name",
+        "buildversion": "1.0.0",
+        "buildTimestamp": "01/01/2019 00:01:00.111",
+        "host": "10.0.0.18",
+        "status": "success",
+        "tier": "dev",
+        "systems": [
+            {
+                "message": "System 1 Ok.",
+                "name": "System 1",
+                "status": "Ok"
+            },
+            {
+                "message": "System 2 Ok.",
+                "name": "System 2",
+                "status": "Ok"
+            }
+        ]
+    }
+}

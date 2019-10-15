@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="new-test-suite.xml" />
+	<munit:test name="new-test-suite-post:\customers:api-configTest" description="Test" doc:id="7473e6bf-c6b4-433b-8dc3-6e2d6d3985f8" >
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to post:\customers:api-config" doc:id="cec0131c-f7a0-43ae-bc05-c10ed136391c" name="post:\customers:api-config"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="efab5042-2efc-446b-870a-e82de37a234f" expression="#[payload]" is='#[MunitTools::equalTo("successfully created data file in sftp server")]'/>
+		</munit:validation>
+	</munit:test>
+
+</mule>

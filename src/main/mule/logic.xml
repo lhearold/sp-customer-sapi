@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:samba="http://www.mulesoft.org/schema/mule/samba"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:min-log="http://www.mulesoft.org/schema/mule/min-log" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd 
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+	http://www.mulesoft.org/schema/mule/min-log http://www.mulesoft.org/schema/mule/min-log/current/mule-min-log.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/samba http://www.mulesoft.org/schema/mule/samba/current/mule-samba.xsd">
+	
+ 	<samba:config name="Samba_Config" doc:name="Samba Config" doc:id="1f0f06c1-2500-4616-ad03-9a68f2b7ea6c" host="${secure::samba.host}" domain="${secure::samba.domain}" share="${secure::samba.share}" userName="${secure::samba.username}" password="${secure::samba.password}" folder="${secure::samba.folder}" timeout="3000" socketTimeout="3000">
+        <expiration-policy />
+    </samba:config>
+	<flow name="post:\customers:api-config">
+        <json-logger:logger doc:name="Logger" doc:id="cafec681-ea9c-45db-9e6c-14a1f53680dd" message='"customers flow started"' correlationId="#[vars.transactionProperties['x-transaction-id']]" />
+        <set-variable value='#["TEST/IREA_" ++ now() as String { format: "YYYYMMddhhmmss"} ++ ".CSV"]' doc:name="Set Variable" doc:id="21c6cf96-8a0f-40e5-abb8-e0a7f0c06fb1" variableName="fileName" />
+		<samba:read-file doc:name="Read File" doc:id="d65389c8-5b5e-4c7a-be66-c7e10d4f7f45" fileName="${secure::file.sourceFile}" outputMimeType="application/csv" config-ref="Samba_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="4fb106f7-e1ec-496c-9970-30ccb424cc65" >
+            <ee:message >
+                <ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload as Iterator]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<foreach doc:name="For Each" doc:id="e40cba40-6650-44cf-afb8-177b1870e4f4" batchSize="10000">
+            <sftp:write doc:name="Write" doc:id="11dffb4c-28b0-45ed-bc46-4842a2b4ef4b" path='#[vars.fileName]' mode="APPEND" config-ref="SFTP_Config">
+				<reconnect-forever />
+			</sftp:write>
+        </foreach>
+		<json-logger:logger doc:name="Logger" doc:id="23a98d59-1bcb-4603-9884-cdd543c376b2" tracePoint="EXCEPTION" config-ref="JSON_Logger_Config" message='"successfully created data file in sftp server"'/>
+    
+</flow>
+	
+</mule>

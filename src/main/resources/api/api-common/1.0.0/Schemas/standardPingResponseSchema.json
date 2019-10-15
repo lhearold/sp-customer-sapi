@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Ping Response Schema",
+  "description": "[Version 1.0.0] JSON Ping response",
+  
+  "type": "object",
+  "properties": {
+    "status":
+    {
+      "type": "string", 
+      "description": "The ping status, usually 200"
+    },
+    "message":
+    {
+      "type": "string",
+      "description": "The ping message, usually Alive"
+    }
+   }
+}

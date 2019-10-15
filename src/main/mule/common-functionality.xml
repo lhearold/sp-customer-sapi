@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd 
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd">
+
+
+	<sub-flow name="mule-common-request-initiation-subflow">
+		<ee:transform doc:name="Initialize Variables" doc:id="ba07e1a8-2c14-450c-a260-fd06784829f2" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="transactionId" ><![CDATA[%dw 2.0
+output application/java
+var uuid=java!java::util::UUID::randomUUID() as String 
+---
+if(attributes.headers['transactionId'] != null) 
+	attributes.headers['transactionId'] 
+else 
+	uuid replace /-/ with '']]></ee:set-variable>
+				<ee:set-variable variableName="logLevel" ><![CDATA[%dw 2.0
+output application/java
+---
+'INFO']]></ee:set-variable>
+				<ee:set-variable variableName="clientId" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.headers['client_id']]]></ee:set-variable>
+				<ee:set-variable variableName="resource" ><![CDATA[%dw 2.0
+output application/java
+---
+if(attributes.relativePath != null) 
+	attributes.relativePath 
+else 
+	null]]></ee:set-variable>
+				<ee:set-variable variableName="httpMethod" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.method]]></ee:set-variable>
+				<ee:set-variable variableName="scheme" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.scheme]]></ee:set-variable>
+				<ee:set-variable variableName="logCategory" ><![CDATA[%dw 2.0
+output application/java
+---
+'Audit']]></ee:set-variable>
+				<ee:set-variable variableName="processingStage" ><![CDATA[%dw 2.0
+output application/java
+---
+'BEGIN']]></ee:set-variable>
+				<ee:set-variable variableName="transactionStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+'Init']]></ee:set-variable>
+				<ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+if(attributes.method == 'POST')
+	201
+else
+	200]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="mule-common-logger-subflow" doc:id="d35f9d89-5246-4d9f-955f-1f8a61f6ea5e" name="mule-common-logger-subflow"/>
+		<set-variable value="#['InProgress']" doc:name="Set processingStage - InProgress" doc:id="cabd1ea0-f6cb-48ba-bdf6-535f763ac603" variableName="processingStage" />
+		<set-variable value="#['InProgress']" doc:name="Set transactionStatus - InProgress" doc:id="9344ee82-7ef5-4ac4-a44d-eb1c07b5eaa3" variableName="transactionStatus" />
+		<!-- <flow-ref name="mhra-mule-common-audit-logger-subflow" doc:name="mhra-mule-common-audit-logger-subflow" 
+			/> -->
+	</sub-flow>
+
+	<sub-flow name="mule-common-response-finalize-subflow">
+		<ee:transform doc:name="Init Required Variables" doc:id="5d6c16c6-d3d9-4919-815f-7f895fa50a4f" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="logLevel" ><![CDATA[%dw 2.0
+output application/java
+---
+'INFO']]></ee:set-variable>
+				<ee:set-variable variableName="transactionStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+if(vars.errorRaised == true) 
+	'FAILURE' 
+else 
+	'SUCCESS']]></ee:set-variable>
+				<ee:set-variable variableName="processingStage" ><![CDATA[%dw 2.0
+output application/java
+---
+'COMPLTED']]></ee:set-variable>
+				<ee:set-variable variableName="logCategory" ><![CDATA[%dw 2.0
+output application/java
+---
+'Audit']]></ee:set-variable>
+				<ee:set-variable variableName="isFinal" ><![CDATA[%dw 2.0
+output application/java
+---
+true]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Optimistic Locking Required?">
+			<when expression="#[vars.eTag == true]">
+			<logger message="ETAG Not implemented.." level="DEBUG" doc:name="Logger" />
+			<!-- 
+				<scripting:execute engine="groovy"
+					doc:name="Create md5 hash of the response" doc:id="ca87cc96-124a-4fe4-abbb-3938ff7741dd"
+					targetValue="#[hash]" target="hash">
+					<scripting:code>import org.apache.commons.codec.digest.DigestUtils;
+
+def bytesOfMessage = payload.getBytes(&quot;UTF-8&quot;);
+def hash = DigestUtils.md5Hex(bytesOfMessage);
+					</scripting:code>
+				</scripting:execute>
+				 -->
+			</when>
+			<otherwise>
+				<logger message="ETAG Not needed" level="DEBUG" doc:name="Logger" />
+			</otherwise>
+		</choice>
+		<flow-ref doc:name="mule-common-logger-subflow" doc:id="40149a5a-a3ed-4ce9-bbf6-eda578c69164" name="mule-common-logger-subflow"/>
+	</sub-flow>
+
+
+	<sub-flow name="mule-common-logger-subflow">
+		<ee:transform doc:name="Compose The Logging Message" doc:id="d0491ec6-aeba-4b53-9ae3-67b2d2a4f4a1" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="commonLogMsg" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	 // This is needed for E2E transaction tracing - it is going to be very useful -
+	 //  in log aggregator (like Splunk or ELK)
+	 (transactionId: vars.transactionId) if(vars.transactionId?),
+	 
+	 // This is a very important piece of audit information which could be 
+	 // logged to track which client is actually making this call
+	 (clientId: vars.clientId) if(vars.clientId?),
+	
+	 // Only applicable when the `flowVars.integrationPattern` is BATCH
+	 //   It tells us which record is being processed out of the batch the 
+	 // application currently handling. This needs to be set manually
+	 (batchRecordId: vars.batchRecordId) if(vars.batchRecordId?),
+	
+	 // This is the name of the application
+	 application: p('application.name'),
+	
+	 (message: vars.logMessage) if(vars.logMessage?),
+	 
+	 dateTimeStamp: now()  as String {format: "yyyy-MM-dd'T'HH:mm:ss" },
+	
+	 // From what type of pattern the log is being triggered.
+	 //     HTTP - The logging is from a Synchronous call - which is almost all the time an API.
+	 //     BATCH - The call is from a batch context
+	 //     MESSAGING - The logging request is from a messaging context      
+	 (integrationPattern: vars.integrationPattern) if(vars.integrationPattern?),  
+	
+	 // Which Rest resource it is working with. Not required for non-api transactions
+	 // It is only applicable when `vars.integrationPattern` is SYNC
+	 (uri: vars.resource) if(vars.resource?) ,
+	 
+	 (httpMethod: vars.httpMethod) if(vars.httpMethod?),
+	 (schem: vars.scheme) if(vars.scheme?),
+
+	 // Current stage of the processing
+	 (processingStage: vars.processingStage) if(vars.processingStage?) ,
+	 
+	 // Current status of the transaction
+	 (transactionStatus: vars.transactionStatus) if(vars.transactionStatus?),
+	 
+	 
+	 (httpStatusCode: vars.httpStatus) if(vars.isFinal?),
+	
+	 // In case of failure, provide proper error message
+	 (errorMessage: vars.errorMessage) if(vars.errorMessage?),
+	
+	 // In case error, more information could be provided here.
+	 (errorDescription: vars.errorDescription) if(vars.errorDescription?) 
+ 
+ }]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="mule-common-logger-based-on-log-level" doc:id="f0c71775-7f04-4097-b4fc-b66d03bdead4" name="mule-common-logger-based-on-log-level"/>
+		<remove-variable doc:name="Remove isFinal" doc:id="0bc3f870-175e-4128-a781-0c2512261bab" variableName="isFinal"/>
+		<remove-variable variableName="commonLogMsg" doc:name="Remove commonLogMsg" />
+		<remove-variable variableName="errorMessage" doc:name="Reset errorMessage" />
+		<remove-variable variableName="errorDescription"
+			doc:name="Reset errorDescription" />
+		<remove-variable variableName="logCategory" doc:name="Reset logCategory" />
+	</sub-flow>
+	<sub-flow name="mule-common-logger-based-on-log-level" doc:id="fc7fb0e4-4494-4138-b812-461791665a9f" >
+		<set-variable value="#[if(vars.logCategory?) vars.logCategory else 'Info']" doc:name="Set logCategory to default if not set" doc:id="0ace43f3-2433-48f4-b6c0-760d24653f3c" variableName="logCategory" />
+		<choice doc:name="Check the log Level" doc:id="1d5f5609-cd7c-42c8-8e20-54c34ae33bff" >
+			<when expression='#[vars.logLevel == "DEBUG"]' >
+				<logger level="DEBUG" doc:name="Logger - DEBUG" doc:id="bab249a7-f189-4801-8283-45561494cb07" message="#[vars.logCategory]: #[vars.commonLogMsg]"/>
+			</when>
+			<when expression='#[vars.logLevel == "ERROR"]' >
+				<logger level="ERROR" doc:name="Logger - ERROR" doc:id="c2d2410f-be5c-49b5-96d3-25915b97e686" message="#[vars.logCategory]: #[vars.commonLogMsg]"/>
+			</when>
+			<when expression='#[vars.logLevel == "WARN"]' >
+				<logger level="WARN" doc:name="Logger - WARN" doc:id="eaffc498-a743-48e8-a3a1-44a53038faea" message="#[vars.logCategory]: #[vars.commonLogMsg]"/>
+			</when>
+			<when expression='#[vars.logLevel == "TRACE"]' >
+				<logger level="TRACE" doc:name="Logger - TRACE" doc:id="bfe8dfb9-1f5d-4a16-88ac-3347ef721939" message="#[vars.logCategory]: #[vars.commonLogMsg]"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger - INFO" doc:id="30c3fc35-5027-49fe-a7d6-4e5b79efb9db" message="#[vars.logCategory]: #[vars.commonLogMsg]"/>
+			</otherwise>
+		</choice>
+	</sub-flow>
+
+</mule>

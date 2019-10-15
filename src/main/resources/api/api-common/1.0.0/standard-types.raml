@@ -1,0 +1,99 @@
+#%RAML 1.0 Library
+#=======================================================================
+# Common API Elements
+# standard-types.raml
+# Date   : September 09, 2019
+# Author : NITISH
+# Rev    : 1
+#=======================================================================
+usage: Standard types for IREA APIs
+
+types:
+
+  HealthCheckStatus:
+    description: Possible health check status values.
+    type: string
+    enum:
+      - Ok
+      - ok
+      - Error
+      - error
+      - Success
+      - success
+      - Warning
+      - warning
+
+  HealthCheckSystemRecord:
+    description: For each system that was health-checked, one or more of this sort of record is returned.
+    properties: 
+      message:
+        type: string
+        description: The message returned by the health-checked system, or other explanatory text
+        example: System 1 healthcheck responds Ok.
+      name:
+        type: string
+        description: The name of the system that was health-checked
+        example: System 1
+      status:
+        type: HealthCheckStatus
+        description: The status of the system that was health-checked
+        example: Ok
+ 
+  HealthCheckResponse:
+    description: Standard response to a healthcheck request
+    properties:
+      response:
+        properties: 
+          application:
+            type: string
+            description: The name of the application that is being health-checked
+            example: Your API Name
+          buildversion:
+            type: string
+            description: The healh-checked application build version
+            example: 1.0.0
+          buildTimestamp:
+            type: string
+            description: The build timestamp of the health-checked application
+            example: 12/06/2018 00:01:00.111
+          host:
+            type: string
+            description: The IP address of the host on which the health-checked application was deployed
+            example: 10.25.12.253
+          status:
+            type: HealthCheckStatus
+            description: The status of the health-checked application
+            example: success
+          tier:
+            type: string
+            description: The environment tier in which the health-checked system resides
+            example: dev
+          systems:
+            type: HealthCheckSystemRecord[]
+            description: An array of chained system records, one for each dependency
+            example:
+              - message: System 1 Ok.
+                name: System 1
+                status: Ok
+              - message: System 2 Ok.
+                name: System 2
+                status: Ok
+
+    examples:
+      !include NamedExamples/get-healthcheck-response.raml
+        
+  PingResponse:
+    description: Standard response to a ping request.
+    properties: 
+      status:
+        type: string
+        description: Always returns "200" on success.
+        example: "200"
+      message:
+        type: string
+        description: Always returns "Alive"
+        example: "Alive"
+
+    examples:
+      !include NamedExamples/get-ping-response.raml
+   

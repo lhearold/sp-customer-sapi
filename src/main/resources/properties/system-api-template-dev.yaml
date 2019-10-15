@@ -1,0 +1,32 @@
+#proxy configuration elements for dev environment
+keystore:
+  path: "mykeystore.jks"
+  password: "mule999"
+  keyPassword: "mule999"
+
+api:
+  id: "12983275"
+  version: "v1"
+
+http:
+  port: "8081"
+
+https:
+  port: "8082"
+
+file:
+  sourceFile: "WU_ACCOUNT_INFO_FOR_RPT_415.csv"
+  
+samba:
+  username: "muleShmZeY"
+  password: "s@dLrFpdWY"
+  host: "sanmgr2"
+  domain: "irea.us"
+  share: "IT"
+  folder: "MulesoftTest"
+  
+sftp:
+  host: "65.198.81.240"
+  username: "IREA"
+  password: "PbCQ21cH"
+  

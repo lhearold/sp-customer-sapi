@@ -1,0 +1,30 @@
+#%RAML 1.0 NamedExample
+#=======================================================================
+# Common API Elements
+# NamedExamples/get-healthcheck-response.raml
+# Date   : September 09, 2019
+# Author : NITISH
+# Rev    : 1
+#=======================================================================
+HealthCheckResponseExample:
+  response:
+    application: your application name
+    buildversion: 1.0.0
+    buildTimestamp: 09/06/2019 00:01:00.111
+    host: 10.0.0.18
+    status: success
+    tier: dev
+    #
+    # If your API is dependent upon other APIs, then it should call their healthcheck methods, or otherwise return
+    # name, staus and message for each one.
+    #
+    systems:
+      - # First system - message, name, and status returned by the referenced API
+        message: System 1 health check Ok.
+        name: System 1
+        status: Ok
+      
+      - # Second system  - message, name, and status returned by the referenced API
+        message: System 2 health check Ok.
+        name: System 2
+        status: Ok

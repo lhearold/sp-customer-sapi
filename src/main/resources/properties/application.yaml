@@ -1,0 +1,6 @@
+api:
+  id: "12983275"
+  version: "v1"
+json.logger:
+  application.name: "sp-customer-sapi"
+  application.version: "v1"

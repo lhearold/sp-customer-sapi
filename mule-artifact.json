@@ -1,0 +1,7 @@
+{
+  "secureProperties": ["secure::my.client-secret", "secure::my.client-id", "mule.key"],
+  "redeploymentEnabled": true,
+  "name": "sp-customer-sapi",
+  "minMuleVersion": "4.2.0",
+  "requiredProduct": "MULE_EE"
+}
